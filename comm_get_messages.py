@@ -50,9 +50,14 @@ class SimpleMAV(object):
     manual_control_string = "rc"
 
     def __init__(self, master, sysID=1, compoID=250):
+        if master == "/dev/ttyACM0":
+            master = detect_pixhawk()
             print "Pixhawk Master is", master
             baud = 115200 
             reboot = False 
+        else:
+            baud = 57600
+            reboot = True
 
         self.conn = mavutil.mavlink_connection(device=master, baud=baud,
                                                autoreconnect=True)
@@ -142,7 +147,10 @@ class SimpleMAV(object):
         ack_msg = None
         while not self.conn.motors_armed():
             self.conn.arducopter_arm()
-            ack_msg = self.conn.recv_match(type='COMMAND_ACK', blocking=True, timeout=0.2)
+            msg = self.conn.recv_msg()
+            print"####################################"
+            print msg
+            ack_msg = None #self.conn.recv_match(type='COMMAND_ACK', blocking=True, timeout=0.2)
             if ack_msg is not None:
                 print "Acknowledgement received : Command = " + str(ack_msg.command) + ", result = " + str(ack_msg.result)
             self.check_periodic_task()
